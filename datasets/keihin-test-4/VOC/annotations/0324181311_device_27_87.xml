@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<annotation>
+  <filename>0324181311_device_27_87.jpg</filename>
+  <size>
+    <width>416</width>
+    <height>416</height>
+    <depth>3</depth>
+  </size>
+  <segmented>0</segmented>
+  <object>
+    <name>leafairy</name>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <occluded>0</occluded>
+    <bndbox>
+      <xmin>151</xmin>
+      <ymin>137</ymin>
+      <xmax>253</xmax>
+      <ymax>233</ymax>
+    </bndbox>
+  </object>
+</annotation>
