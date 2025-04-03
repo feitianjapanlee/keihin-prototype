@@ -23,9 +23,9 @@ cap = None
 def init_camera():
     global cap
     # MaixCam用設定 (適宜調整)
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(2, cv2.CAP_V4L2)
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     
     if not cap.isOpened():
         print("Error: カメラを開けません")
@@ -41,7 +41,7 @@ def detect_objects():
     if not init_camera():
         return
 
-    model = YOLO('yolov8n.pt')
+    model = YOLO('models/yolov8n.pt')
     
     counted_ids = set()
 
@@ -124,6 +124,10 @@ def index():
     <html>
     <head>
         <meta charset="UTF-8">
+        <style type="text/css">
+            #count-display { font-size: 1.6em }
+            .count-value { font-size: 1.6em; color: red; }
+        </style>
     </head>
     <body>
         <h1>景品検出モニター</h1>

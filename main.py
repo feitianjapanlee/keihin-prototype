@@ -16,12 +16,12 @@ detected_objects = []   # list of dict for display result
 lock = threading.Lock()
 annotated_frame = None
 
-detect_confi_threshold = 0.6        # confidence threshold of detection
-detect_iou_threshold = 0.4          # iou threshold of detection
+detect_confi_threshold = 0.5        # confidence threshold of detection
+detect_iou_threshold = 0.45         # iou threshold of detection
 max_lost_buff_frame = 120           # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
 high_threshold = 0.6                # confidence threshold to new a track
-match_threshold = 0.7               # iou threshold to treat as same object
+match_threshold = 0.8               # iou threshold to treat as same object
 max_history_num = 5                 # max length of track history
 
 
@@ -134,6 +134,10 @@ def index():
     <html>
     <head>
         <meta charset="UTF-8">
+        <style type="text/css">
+            #count-display { font-size: 1.6em }
+            .count-value { font-size: 1.6em; color: red; }
+        </style>
     </head>
     <body>
         <h1>景品検出モニター</h1>
