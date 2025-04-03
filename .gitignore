@@ -1,0 +1,5 @@
+.venv
+runs
+.ipynb_checkpoints
+*.pt
+*.cache
