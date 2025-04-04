@@ -15,7 +15,12 @@
 - https://blog.csdn.net/m0_75041317/category_12808588.html
 
 ## メモ
-オフラインtrainのDocker環境構築
+MaixHubで作ったVOCデータセットをYOLOデータセットに変換：
+```
+cd train
+python p2y-convertor.py
+```
+オフラインtrainのDocker環境構築：
 ```bash
 nvidia-smi
 cd \workspace\keihin-prototype
@@ -26,4 +31,12 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 jupyter notebook --allow-root --ip="0.0.0.0"
+```
+onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子化)：
+```bash
+# 参考: https://wiki.sipeed.com/maixpy/doc/en/ai_model_converter/maixcam.html
+# 参考: https://wiki.sipeed.com/maixpy/doc/en/vision/customize_model_yolov8.html
+# https://github.com/sophgo/tpu-mlir/releasesから最新whlファイル(例えば、tpu_mlir-1.17-py3-none-any.whl)をダウンロード
+pip install tpu_mlir-1.17-py3-none-any.whl
+convert_yolov8n_onnx2cvimodel.sh
 ```
