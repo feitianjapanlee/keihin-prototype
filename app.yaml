@@ -1,6 +1,6 @@
 id: keihin_counter
 name: Keihin Counter
-version: 0.1.0
+version: 0.1.1
 author: Feitian Japan Co., Ltd.
 icon: app.png
 desc: Keihin Counter prototype run on MaixCam board.

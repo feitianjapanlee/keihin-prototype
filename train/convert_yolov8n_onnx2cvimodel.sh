@@ -21,7 +21,7 @@ cd workspace
 # convert to mlir
 model_transform.py \
 --model_name ${net_name} \
---model_def ../best.onnx \
+--model_def ../../models/train15/weights/best.onnx \
 --input_shapes [[1,3,${input_h},${input_w}]] \
 --mean "0,0,0" \
 --scale "0.00392156862745098,0.00392156862745098,0.00392156862745098" \

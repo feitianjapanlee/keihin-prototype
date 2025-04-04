@@ -29,7 +29,7 @@ def detect_objects():
     global counts, track_history, detected_objects, lock, annotated_frame
     
     # detector = nn.YOLOv8(model="/root/models/yolov8n.mud", dual_buff = True)
-    detector = nn.YOLOv5(model="/root/models/maixhub/189101/model_189101.mud", dual_buff = True)
+    detector = nn.YOLOv8(model="/root/models/train15_yolov8n_int8.mud", dual_buff = True)
     cam = camera.Camera(detector.input_width(), detector.input_height(), detector.input_format())    
     maix_tracker = tracker.ByteTracker(max_lost_buff_frame, track_threshold, high_threshold, match_threshold, max_history_num)
     
