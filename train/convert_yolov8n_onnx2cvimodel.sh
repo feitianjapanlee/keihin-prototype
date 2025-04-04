@@ -1,68 +1,67 @@
-#!/bin/bash
-set -
+#!/bin/bash
 
-
-net_name=yolo8n
-input_w320
-input_
-24
-
-# mean: , 0, 0
-# std: 255, 5, 255
-# mea
+set -e
 
-# 1/std
-
-# ean: 0, 0, 0
-# scale: 0.00392156862745098, 0.00392156862745098, 0.003156862745098
-
-mkir -p workspa
+net_name=yolov8n
+input_w=320
+input_h=224
 
-cd workspace
+# mean: 0, 0, 0
+# std: 255, 255, 255
 
-# convert to mlir
-odel_transform.py \
---modl_name ${net_name} \
---model_def../${net_name}.onnx \
---input_shapes [[1,3,${nput_h},${input_w]] \
---mean "0,0,0" \
---scale "0.00392156862745098,0.0039215686274508,0.00392156862745098"\
---keep_aspect_rato \
---pixel_format rgb\
---channel_format nchw \
---output_names "/model.22/dfl/conv/Conv_output_0,model.22/Sigmod_output_" \
---test_input ../3.jpg \
---test_resul ${net_name}_top_outputsnpz \
---tolerance 0.99.99 \
---mlir ${net_ame}.mlir
-
-# export bf16 model
-#   not use --quan_input, use float3 for easy coding
-model_dploy.py \
---mlir${net_name}.mlir \
--quantize BF16 \
---processor cv181x 
---test_input ${net_name}_in_f32.npz \
---tet_reference ${net_name}_top_outputnpz \
---model ${net_name}_bf16.vimodel
-
-echo "clibrate for int8 model"
-# export int model
-run_calibratin.py ${net_name}.mir \
---dataset ../images\
---input_num 200 \
--o ${ne_name}_cali_table
+# mean
+# 1/std
 
-echo "convert to int8 model"
-# export int8 model
-#    add --quant_input, use nt8 for faster proessing in maix.nn.NN.forwad_image
-model_deloy.py \
---mli ${net_name}.mlir \
---quantize INT8 \
---qant_input \
---calibation_table ${net_name}_cali_table \--processor cv181x \
---test_input ${net_name}in_f32.npz \
---test_eference ${net_name}_top_outputs.npz \
---tolerance 0.9,0.6 \
---model ${net_name}_int8.cvimodel
-
+# mean: 0, 0, 0
+# scale: 0.00392156862745098, 0.00392156862745098, 0.00392156862745098
+
+mkdir -p workspace
+cd workspace
+
+# convert to mlir
+model_transform.py \
+--model_name ${net_name} \
+--model_def ../best.onnx \
+--input_shapes [[1,3,${input_h},${input_w}]] \
+--mean "0,0,0" \
+--scale "0.00392156862745098,0.00392156862745098,0.00392156862745098" \
+--keep_aspect_ratio \
+--pixel_format rgb \
+--channel_format nchw \
+--output_names "/model.22/dfl/conv/Conv_output_0,/model.22/Sigmoid_output_0" \
+--test_input ../3.jpg \
+--test_result ${net_name}_top_outputs.npz \
+--tolerance 0.99,0.99 \
+--mlir ${net_name}.mlir
+
+# export bf16 model
+#   not use --quant_input, use float32 for easy coding
+model_deploy.py \
+--mlir ${net_name}.mlir \
+--quantize BF16 \
+--processor cv181x \
+--test_input ${net_name}_in_f32.npz \
+--test_reference ${net_name}_top_outputs.npz \
+--model ${net_name}_bf16.cvimodel
+
+echo "calibrate for int8 model"
+# export int8 model
+run_calibration.py ${net_name}.mlir \
+--dataset ../../datasets/keihin-test-4/YOLO/images/train \
+--input_num 200 \
+-o ${net_name}_cali_table
+
+echo "convert to int8 model"
+# export int8 model
+#    add --quant_input, use int8 for faster processing in maix.nn.NN.forward_image
+model_deploy.py \
+--mlir ${net_name}.mlir \
+--quantize INT8 \
+--quant_input \
+--calibration_table ${net_name}_cali_table \
+--processor cv181x \
+--test_input ${net_name}_in_f32.npz \
+--test_reference ${net_name}_top_outputs.npz \
+--tolerance 0.9,0.6 \
+--model ${net_name}_int8.cvimodel
+
