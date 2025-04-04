@@ -37,6 +37,8 @@ onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/ai_model_converter/maixcam.html
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/vision/customize_model_yolov8.html
 # https://github.com/sophgo/tpu-mlir/releasesから最新whlファイル(例えば、tpu_mlir-1.17-py3-none-any.whl)をダウンロード
+cd \workspace\keihin-prototype
+docker run --privileged --name tpu-env -v ${PWD}:/workspace -it sophgo/tpuc_dev
 pip install tpu_mlir-1.17-py3-none-any.whl
-convert_yolov8n_onnx2cvimodel.sh
+convert_yolo_onnx2cvimodel.sh
 ```
