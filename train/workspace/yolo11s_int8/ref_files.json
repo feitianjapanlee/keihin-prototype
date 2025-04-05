@@ -1,0 +1,60 @@
+{
+  "version": "v1.17-20250402",
+  "files": {
+    "origin_model": {
+      "path": "../../../models/train17/weights/best.onnx",
+      "last_modify": 1743855665.5854278
+    },
+    "origin_mlir": {
+      "path": "../yolo11s_origin.mlir",
+      "last_modify": 1743860754.1473503
+    },
+    "top_mlir": {
+      "path": "../yolo11s.mlir",
+      "last_modify": 1743860756.882261
+    },
+    "mlir_input": {
+      "path": "../yolo11s_in_f32.npz",
+      "last_modify": 1743860934.5903223
+    },
+    "tpuc_opt": {
+      "path": "../../../../usr/local/lib/python3.10/dist-packages/tpu_mlir/bin/tpuc-opt",
+      "last_modify": 1743859407.209428
+    },
+    "bmodel": {
+      "path": "../yolo11s_int8.cvimodel",
+      "last_modify": 1743860942.1536646
+    },
+    "final_mlir": {
+      "path": "../yolo11s_cv181x_int8_sym_final.mlir",
+      "last_modify": 1743860941.7654176
+    },
+    "tpu_mlir": {
+      "path": "../yolo11s_cv181x_int8_sym_tpu.mlir",
+      "last_modify": 1743860937.4691384
+    },
+    "tpu_output": {
+      "path": "../yolo11s_cv181x_int8_sym_tpu_outputs.npz",
+      "last_modify": 1743860938.331063
+    },
+    "bmodel_output": {
+      "path": "../yolo11s_cv181x_int8_sym_model_outputs.npz",
+      "last_modify": 1743860947.2003584
+    },
+    "context_dir": {
+      "path": ".",
+      "last_modify": 1743860947.3945432
+    }
+  },
+  "commands": {
+    "transform_cmd": "/usr/local/lib/python3.10/dist-packages/tpu_mlir/python/tools/model_transform.py --model_name yolo11s --model_def ../../models/train17/weights/best.onnx --input_shapes [[1,3,224,320]] --mean 0,0,0 --scale 0.00392156862745098,0.00392156862745098,0.00392156862745098 --keep_aspect_ratio --pixel_format rgb --channel_format nchw --output_names /model.23/dfl/conv/Conv_output_0,/model.23/Sigmoid_output_0 --test_input ../3.jpg --test_result yolo11s_top_outputs.npz --tolerance 0.99,0.99 --mlir yolo11s.mlir",
+    "deploy_cmd": "/usr/local/lib/python3.10/dist-packages/tpu_mlir/python/tools/model_deploy.py --mlir yolo11s.mlir --quantize INT8 --quant_input --calibration_table yolo11s_cali_table --processor cv181x --test_input yolo11s_in_f32.npz --test_reference yolo11s_top_outputs.npz --tolerance 0.9,0.6 --model yolo11s_int8.cvimodel",
+    "final": "tpuc-opt yolo11s_cv181x_int8_sym_tpu.mlir --mlir-disable-threading --strip-io-quant=\"quant_input=True quant_output=False quant_input_list= quant_output_list= quant_output_bf16=False\" --processor-tpu-optimize --dev-parallel --weight-reorder  --subnet-divide=\"dynamic=False\" --op-reorder --future-update=\"rank=0 weight_list=\" --layer-group=\"opt=2 group_by_cores=auto compress_mode=none\"  --core-parallel --address-assign -o yolo11s_cv181x_int8_sym_final.mlir --debug_cmd=",
+    "bmodel": "tpuc-opt yolo11s_cv181x_int8_sym_final.mlir --codegen=\"model_file=yolo11s_int8.cvimodel embed_debug_info=False model_version=latest bmodel_only=False\" -o /dev/null"
+  },
+  "properties": {
+    "prefix": "yolo11s_cv181x_int8_sym",
+    "chip": "cv181x",
+    "compare_all": false
+  }
+}
