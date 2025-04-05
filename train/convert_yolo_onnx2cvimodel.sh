@@ -2,7 +2,7 @@
 
 set -e
 
-net_name=yolov8n
+net_name=yolo11s
 input_w=320
 input_h=224
 
@@ -21,14 +21,14 @@ cd workspace
 # convert to mlir
 model_transform.py \
 --model_name ${net_name} \
---model_def ../../models/train15/weights/best.onnx \
+--model_def ../../models/train17/weights/best.onnx \
 --input_shapes [[1,3,${input_h},${input_w}]] \
 --mean "0,0,0" \
 --scale "0.00392156862745098,0.00392156862745098,0.00392156862745098" \
 --keep_aspect_ratio \
 --pixel_format rgb \
 --channel_format nchw \
---output_names "/model.22/dfl/conv/Conv_output_0,/model.22/Sigmoid_output_0" \
+--output_names "/model.23/dfl/conv/Conv_output_0,/model.23/Sigmoid_output_0" \
 --test_input ../3.jpg \
 --test_result ${net_name}_top_outputs.npz \
 --tolerance 0.99,0.99 \
