@@ -1,7 +1,7 @@
 # AI画像識別で景品の識別と計数　プロトタイプ
 - プライズゲーム機のブース出口に落ちた景品を識別し、種類毎にカウント、結果を外部に送信
 - ターゲットデバイスはMaixCam（Sipeed社のシングルボードコンピューター）
-- YOLOv5/v8で試作
+- YOLOv5/v8/v11で試作
 - カスタムデータセットはカーゾック吉祥寺店にてプレーして獲得した景品４種各１個
 ## 使うツール
 - **MaixVision**：MaixCamへのDeployやファイルコピーなど
@@ -15,6 +15,13 @@
 - https://blog.csdn.net/m0_75041317/category_12808588.html
 
 ## メモ
+- 効果：YOLOv11≒YOLOv8n≒YOLOv5s
+- 640x640は遅すぎなのでw320h224で現実的
+- INT8に量子化が必須
+- オーグメンテーションはYOLO搭載のもので使っているが、本番はCVATやalbumentationが必須かも
+- 認識率をUPすることより、trackerの判断ロジックはもっと重要かも
+- MaixHubでは簡単に初期バージョンできるが、現時点はv5しかできないので物足りないかも。やはりオフラインtrain
+
 MaixHubで作ったVOCデータセットをYOLOデータセットに変換：
 ```
 cd train
@@ -37,6 +44,10 @@ onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/ai_model_converter/maixcam.html
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/vision/customize_model_yolov8.html
 # https://github.com/sophgo/tpu-mlir/releasesから最新whlファイル(例えば、tpu_mlir-1.17-py3-none-any.whl)をダウンロード
+cd \workspace\keihin-prototype
+docker run --privileged --name tpu-env -v ${PWD}:/workspace -it sophgo/tpuc_dev
+# "pip install tpu_mlir" do the same but always error because download out of time,
+# so download the whl file from github release page first. 
 pip install tpu_mlir-1.17-py3-none-any.whl
-convert_yolov8n_onnx2cvimodel.sh
+convert_yolo_onnx2cvimodel.sh
 ```

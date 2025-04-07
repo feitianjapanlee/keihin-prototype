@@ -41,7 +41,8 @@ def detect_objects():
     if not init_camera():
         return
 
-    model = YOLO('models/yolov8n.pt')
+    # model = YOLO('models/yolov8n.pt')
+    model = YOLO('models/train17/weights/best.onnx')
     
     counted_ids = set()
 
