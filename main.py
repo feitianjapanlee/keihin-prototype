@@ -1,4 +1,4 @@
-from maix import camera, image, nn, app, tracker
+from maix import camera, image, nn, app, tracker, touchscreen, display, sys
 from flask import Flask, Response
 import cv2  # only for JPEG encode
 import json
@@ -9,6 +9,7 @@ from collections import defaultdict
 fapp = Flask(__name__)
 
 # グローバル変数
+model_name = "/root/models/train16_yolo11n_w320h224.mud"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
@@ -18,7 +19,7 @@ annotated_frame = None
 
 detect_confi_threshold = 0.5        # confidence threshold of detection
 detect_iou_threshold = 0.45         # iou threshold of detection
-max_lost_buff_frame = 120           # frames to keep before mark as lost
+max_lost_buff_frame = 20            # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
 high_threshold = 0.6                # confidence threshold to new a track
 match_threshold = 0.8               # iou threshold to treat as same object
@@ -26,10 +27,10 @@ max_history_num = 5                 # max length of track history
 
 
 def detect_objects():
-    global counts, track_history, detected_objects, lock, annotated_frame
+    global model_name, counts, track_history, detected_objects, lock, annotated_frame
     
     # detector = nn.YOLOv8(model="/root/models/yolov8n.mud", dual_buff = True)
-    detector = nn.YOLOv8(model="/root/models/train16_yolo11n_w320h224.mud", dual_buff = True)
+    detector = nn.YOLOv8(model=model_name, dual_buff = True)
     cam = camera.Camera(detector.input_width(), detector.input_height(), detector.input_format())    
     maix_tracker = tracker.ByteTracker(max_lost_buff_frame, track_threshold, high_threshold, match_threshold, max_history_num)
     
@@ -176,6 +177,29 @@ def index():
     """
 
 if __name__ == '__main__':
+    disp = display.Display()
+    img = image.Image(disp.width(), disp.height())
+    
+    img.draw_string(0, 10, "Keihin Counter Prototype", image.COLOR_WHITE, 2)
+    img.draw_string(0, 50, f"{model_name}", image.COLOR_WHITE, 1)
+    img.draw_string(0, 80, f"http://{sys.ip_address()['wlan0']}:5000", image.COLOR_GREEN, 2)
+    disp.show(img)
+
     thread = threading.Thread(target=detect_objects, daemon=True)
     thread.start()
     fapp.run(host='0.0.0.0', port=5000)
+
+    """
+    ts = touchscreen.TouchScreen()
+    exit_label = "[Exit]"
+    exit_ssize = image.string_size(exit_label)
+    exit_btn_pos = [disp.width()-exit_ssize.width()-9*2, disp.height()-exit_ssize.height()-9*2, exit_ssize.width()+8*2, exit_ssize.height()+8*2]
+    img.draw_string(exit_btn_pos[0]+8, exit_btn_pos[1]+8, exit_label, image.COLOR_WHITE)
+    img.draw_rect(exit_btn_pos[0], exit_btn_pos[1], exit_btn_pos[2], exit_btn_pos[3], image.COLOR_GREEN)
+    def button_event(x, y, btn_pos):
+        return x>btn_pos[0] and x<btn_pos[0]+btn_pos[2] and y>btn_pos[1] and y<btn_pos[1]+btn_pos[3]
+    while not app.need_exit():
+        x, y, pressed = ts.read()
+        if button_event(x, y, exit_btn_pos):
+            app.set_exit_flag(True)
+    """
