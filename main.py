@@ -19,7 +19,7 @@ annotated_frame = None
 
 detect_confi_threshold = 0.5        # confidence threshold of detection
 detect_iou_threshold = 0.45         # iou threshold of detection
-max_lost_buff_frame = 20            # frames to keep before mark as lost
+max_lost_buff_frame = 30            # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
 high_threshold = 0.6                # confidence threshold to new a track
 match_threshold = 0.8               # iou threshold to treat as same object
@@ -102,7 +102,7 @@ def video_feed():
         global lock, annotated_frame
         while True:
             with lock:
-                if annotated_frame is not None:
+                # if annotated_frame is not None:
                     _, jpeg = cv2.imencode('.jpg', image.image2cv(annotated_frame))
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
