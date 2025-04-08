@@ -32,7 +32,7 @@ python p2y-convertor.py
 nvidia-smi
 cd \workspace\keihin-prototype
 docker run -it --shm-size=2g --gpus all -p 8888:8888 -v ${PWD}:/workspace nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-cd workspace
+cd workspace/keihin-prototype
 apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
 python3 -m venv .venv
 source .venv/bin/activate
