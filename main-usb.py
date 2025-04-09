@@ -12,12 +12,24 @@ from collections import defaultdict
 app = Flask(__name__)
 
 # グローバル変数
+model_name = "models/train44/weights/best.onnx"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
-detected_objects = []
+detected_objects = []   # list of dict for display result
 lock = threading.Lock()
 annotated_frame = None
+draw_rects = False                  # whether to draw image of detected objects
+feed_video = False                  # whether to feed result image to web
+
+detect_confi_threshold = 0.7        # confidence threshold of detection
+detect_iou_threshold = 0.5          # iou threshold of detection
+max_lost_buff_frame = 30            # frames to keep before mark as lost
+track_threshold = 0.4               # confidence threshold to continue track
+high_threshold = 0.6                # confidence threshold to new a track
+match_threshold = 0.8               # iou threshold to treat as same object
+max_history_num = 5                 # max length of track history
+
 cap = None
 
 def init_camera():
@@ -36,13 +48,13 @@ def init_camera():
     return True
 
 def detect_objects():
-    global counts, track_history, detected_objects, lock, annotated_frame
+    global counts, track_history, detected_objects, lock, annotated_frame, model_name, draw_rects
     
     if not init_camera():
         return
 
     # model = YOLO('models/yolov8n.pt')
-    model = YOLO('models/train17/weights/best.onnx')
+    model = YOLO(model_name)
     
     counted_ids = set()
 
@@ -56,8 +68,9 @@ def detect_objects():
         # 推論 (軽量化のため解像度を下げる)
         results = model.track(frame, imgsz=320, persist=True)
         
-        with lock:
-            annotated_frame = results[0].plot()
+        if draw_rects:
+            with lock:
+                annotated_frame = results[0].plot()
 
         current_objects = []
         if results[0].boxes.id is not None:
@@ -88,6 +101,7 @@ def detect_objects():
 
 @app.route('/video_feed')
 def video_feed():
+    global feed_video
     def generate():
         global lock, annotated_frame
         while True:
@@ -97,8 +111,10 @@ def video_feed():
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
             time.sleep(0.05)
-    
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if feed_video:
+        return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return Response(status=204)
 
 @app.route('/stream')
 def stream():
