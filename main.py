@@ -16,15 +16,15 @@ track_history = defaultdict(list)
 detected_objects = []   # list of dict for display result
 lock = threading.Lock()
 annotated_frame = None
-draw_image = False                  # whether to draw image of detected objects
-feed_video = False                  # whether to feed result image to web
+draw_detect = False     # whether to draw image of detected objects
+feed_video = False      # whether to feed result image to web
 
-detect_confi_threshold = 0.5        # confidence threshold of detection
-detect_iou_threshold = 0.45         # iou threshold of detection
-max_lost_buff_frame = 30            # frames to keep before mark as lost
+detect_confi_threshold = 0.6        # confidence threshold of detection
+detect_iou_threshold = 0.4          # iou threshold of detection
+max_lost_buff_frame = 10            # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
-high_threshold = 0.6                # confidence threshold to new a track
-match_threshold = 0.8               # iou threshold to treat as same object
+high_threshold = 0.5                # confidence threshold to new a track
+match_threshold = 0.7               # iou threshold to treat as same object
 max_history_num = 5                 # max length of track history
 
 
@@ -47,9 +47,9 @@ def detect_objects():
         results = detector.detect(frame, conf_th = detect_confi_threshold, iou_th = detect_iou_threshold)
         
         # draw detected results before tracking with gray color
-        if draw_image:
-            with lock:
-                annotated_frame = frame.copy()
+        with lock:
+            annotated_frame = frame.copy()
+            if draw_detect:
                 for obj in results:
                     annotated_frame.draw_rect(obj.x, obj.y, obj.w, obj.h, color = image.COLOR_GRAY)
                     msg = f'{detector.labels[obj.class_id]}: {obj.score:.2f}'
@@ -91,7 +91,7 @@ def detect_objects():
             counted_ids = counted_ids[100:]
 
         # draw tracking objects with red color
-        if draw_image:
+        if draw_detect:
             with lock:
                 for obj in detected_objects:
                     annotated_frame.draw_rect(obj['x'], obj['y'], obj['w'], obj['h'], color = image.COLOR_RED)
@@ -106,16 +106,15 @@ def video_feed():
         global lock, annotated_frame
         while True:
             with lock:
-                # if annotated_frame is not None:
+                if feed_video and annotated_frame is not None:
                     _, jpeg = cv2.imencode('.jpg', image.image2cv(annotated_frame))
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-            time.sleep(0.05)
+                else:
+                    jpeg = image.Image(1, 1, image.Format.FMT_JPEG)
+                yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+            time.sleep(0.2)
     
-    if feed_video:
-        return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    else:
-        return Response(status=204)
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @fapp.route('/stream')
 def stream():
