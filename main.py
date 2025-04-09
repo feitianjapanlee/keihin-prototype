@@ -9,7 +9,7 @@ from collections import defaultdict
 fapp = Flask(__name__)
 
 # グローバル変数
-model_name = "/root/models/train16_yolo11n_w320h224.mud"
+model_name = "/root/models/train44_yolo11n_320.mud"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
