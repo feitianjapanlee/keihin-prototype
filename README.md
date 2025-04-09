@@ -1,5 +1,5 @@
 # AI画像識別で景品の識別と計数　プロトタイプ
-- プライズゲーム機のブース出口に落ちた景品を識別し、種類毎にカウント、結果を外部に送信
+- クレーンゲーム機のブース出口に落ちた景品を識別し、種類毎にカウント、結果を外部に送信
 - ターゲットデバイスはMaixCam（Sipeed社のシングルボードコンピューター）
 - YOLOv5/v8/v11で試作
 - カスタムデータセットはカーゾック吉祥寺店にてプレーして獲得した景品４種各１個
@@ -16,7 +16,7 @@
 
 ## メモ
 - 効果：YOLOv11≒YOLOv8n≒YOLOv5s
-- 640x640は遅すぎなのでw320h224で現実的
+- 640x640は遅すぎなので320x320程度で現実的
 - INT8に量子化が必須
 - オーグメンテーションはYOLO搭載のもので使っているが、本番はCVATやalbumentationが必須かも
 - 認識率をUPすることより、trackerの判断ロジックはもっと重要かも
@@ -32,7 +32,7 @@ python p2y-convertor.py
 nvidia-smi
 cd \workspace\keihin-prototype
 docker run -it --shm-size=2g --gpus all -p 8888:8888 -v ${PWD}:/workspace nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-cd workspace
+cd workspace/keihin-prototype
 apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
 python3 -m venv .venv
 source .venv/bin/activate
