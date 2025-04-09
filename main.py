@@ -9,13 +9,15 @@ from collections import defaultdict
 fapp = Flask(__name__)
 
 # グローバル変数
-model_name = "/root/models/train16_yolo11n_w320h224.mud"
+model_name = "/root/models/train44_yolo11n_320.mud"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
 detected_objects = []   # list of dict for display result
 lock = threading.Lock()
 annotated_frame = None
+draw_image = False                  # whether to draw image of detected objects
+feed_video = False                  # whether to feed result image to web
 
 detect_confi_threshold = 0.5        # confidence threshold of detection
 detect_iou_threshold = 0.45         # iou threshold of detection
@@ -45,12 +47,13 @@ def detect_objects():
         results = detector.detect(frame, conf_th = detect_confi_threshold, iou_th = detect_iou_threshold)
         
         # draw detected results before tracking with gray color
-        with lock:
-            annotated_frame = frame.copy()
-            for obj in results:
-                annotated_frame.draw_rect(obj.x, obj.y, obj.w, obj.h, color = image.COLOR_GRAY)
-                msg = f'{detector.labels[obj.class_id]}: {obj.score:.2f}'
-                annotated_frame.draw_string(obj.x, obj.y, msg, color = image.COLOR_GRAY)
+        if draw_image:
+            with lock:
+                annotated_frame = frame.copy()
+                for obj in results:
+                    annotated_frame.draw_rect(obj.x, obj.y, obj.w, obj.h, color = image.COLOR_GRAY)
+                    msg = f'{detector.labels[obj.class_id]}: {obj.score:.2f}'
+                    annotated_frame.draw_string(obj.x, obj.y, msg, color = image.COLOR_GRAY)
 
         maix_objects = []   # list used as input parameter for tracker function
         for obj in results:
@@ -88,11 +91,12 @@ def detect_objects():
             counted_ids = counted_ids[100:]
 
         # draw tracking objects with red color
-        with lock:
-            for obj in detected_objects:
-                annotated_frame.draw_rect(obj['x'], obj['y'], obj['w'], obj['h'], color = image.COLOR_RED)
-                msg = f"{obj['class']}({obj['id']}): {obj['score']:.2f}"
-                annotated_frame.draw_string(obj['x'], obj['y'], msg, color = image.COLOR_RED)
+        if draw_image:
+            with lock:
+                for obj in detected_objects:
+                    annotated_frame.draw_rect(obj['x'], obj['y'], obj['w'], obj['h'], color = image.COLOR_RED)
+                    msg = f"{obj['class']}({obj['id']}): {obj['score']:.2f}"
+                    annotated_frame.draw_string(obj['x'], obj['y'], msg, color = image.COLOR_RED)
 
         time.sleep(0.1)
 
@@ -108,7 +112,10 @@ def video_feed():
                            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
             time.sleep(0.05)
     
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if feed_video:
+        return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return Response(status=204)
 
 @fapp.route('/stream')
 def stream():
