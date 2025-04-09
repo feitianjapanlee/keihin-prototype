@@ -2,9 +2,9 @@
 
 set -e
 
-net_name=yolo11s
+net_name=yolo11n
 input_w=320
-input_h=224
+input_h=320
 
 # mean: 0, 0, 0
 # std: 255, 255, 255
@@ -21,7 +21,7 @@ cd workspace
 # convert to mlir
 model_transform.py \
 --model_name ${net_name} \
---model_def ../../models/train17/weights/best.onnx \
+--model_def ../../models/train44/weights/best.onnx \
 --input_shapes [[1,3,${input_h},${input_w}]] \
 --mean "0,0,0" \
 --scale "0.00392156862745098,0.00392156862745098,0.00392156862745098" \
@@ -47,7 +47,7 @@ model_deploy.py \
 echo "calibrate for int8 model"
 # export int8 model
 run_calibration.py ${net_name}.mlir \
---dataset ../../datasets/keihin-test-4/YOLO/images/train \
+--dataset ../../datasets/keihin-test-4-1000-w640h480/images/train \
 --input_num 200 \
 -o ${net_name}_cali_table
 

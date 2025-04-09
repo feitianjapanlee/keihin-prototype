@@ -1,7 +1,7 @@
 .venv*
 .ipynb_checkpoints
 *.cache
+*.whl
 runs
 dist
-*.whl
-datasets
+train/workspace
