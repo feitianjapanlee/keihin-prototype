@@ -19,10 +19,10 @@ track_history = defaultdict(list)
 detected_objects = []   # list of dict for display result
 lock = threading.Lock()
 annotated_frame = None
-draw_rects = False                  # whether to draw image of detected objects
-feed_video = False                  # whether to feed result image to web
+draw_rects = True                  # whether to draw image of detected objects
+feed_video = True                  # whether to feed result image to web
 
-detect_confi_threshold = 0.7        # confidence threshold of detection
+detect_confi_threshold = 0.5        # confidence threshold of detection
 detect_iou_threshold = 0.5          # iou threshold of detection
 max_lost_buff_frame = 30            # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
@@ -35,9 +35,9 @@ cap = None
 def init_camera():
     global cap
     # MaixCam用設定 (適宜調整)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        cap = cv2.VideoCapture(2, cv2.CAP_V4L2)
     
     if not cap.isOpened():
         print("Error: カメラを開けません")
@@ -66,7 +66,13 @@ def detect_objects():
             continue
         
         # 推論 (軽量化のため解像度を下げる)
-        results = model.track(frame, imgsz=320, persist=True)
+        results = model.track(
+            frame, 
+            imgsz=320, 
+            conf=detect_confi_threshold, 
+            iou=detect_iou_threshold, 
+            tracker="bytetrack.yaml",
+            persist=True)
         
         if draw_rects:
             with lock:
