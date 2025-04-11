@@ -5,4 +5,4 @@
 *.whl
 runs
 dist
-train/workspace
+train/workspace/*
