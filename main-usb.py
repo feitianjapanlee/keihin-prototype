@@ -12,7 +12,7 @@ from collections import defaultdict
 app = Flask(__name__)
 
 # グローバル変数
-model_name = "models/train44/weights/best.onnx"
+model_name = "models/train48/weights/best.onnx"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
