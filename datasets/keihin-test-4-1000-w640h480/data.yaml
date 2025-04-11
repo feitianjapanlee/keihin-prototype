@@ -1,5 +1,5 @@
 # Relative to the yolo Dataset root directory
-path: .
+path: ./keihin-test-4-1000-w640h480/
 train: images/train # train images (relative to 'path')
 val: images/val # val images (relative to 'path')
 test: # test images (optional)

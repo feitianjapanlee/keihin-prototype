@@ -1,0 +1,12 @@
+# Relative to the yolo Dataset root directory
+path: ./keihin-test-4-1000/
+train: images/train # train images (relative to 'path') 
+val: images/val # val images (relative to 'path')
+test: # test images (optional)
+
+names:
+  0: dogclip
+  1: leafairy
+  2: bluefish
+  3: whitefish
+
