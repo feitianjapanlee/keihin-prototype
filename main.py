@@ -1,7 +1,7 @@
 from maix import camera, image, nn, app, tracker, touchscreen, display, sys
 from flask import Flask, Response
 import cv2  # only for JPEG encode
-import base64
+import numpy as np
 import json
 import threading
 import time
@@ -21,11 +21,11 @@ draw_detect = True     # whether to draw image of detected objects
 feed_video = True      # whether to feed result image to web
 
 detect_confi_threshold = 0.7        # confidence threshold of detection
-detect_iou_threshold = 0.3          # iou threshold of detection
+detect_iou_threshold = 0.5          # iou threshold of detection
 max_lost_buff_frame = 20            # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
-high_threshold = 0.7                # confidence threshold to new a track
-match_threshold = 0.5               # iou threshold to treat as same object
+high_threshold = 0.5                # confidence threshold to new a track
+match_threshold = 0.8               # iou threshold to treat as same object
 max_history_num = 5                 # max length of track history
 
 
@@ -84,9 +84,12 @@ def detect_objects():
                 'score': track.score
             })
             if track.id not in counted_ids:
+                print(f"track.id: {track.id}, cls: {detector.labels[obj.class_id]} is new, add to counted_ids.")  # デバッグメッセージ
                 counts[detector.labels[obj.class_id]] += 1
                 counted_ids.add(track.id)
-        
+            else:
+                print(f"track.id: {track.id}, cls: {detector.labels[obj.class_id]} is already counted.")  # デバッグメッセージ
+
         # remove some history do not need
         if len(counted_ids) > 200:
             counted_ids = counted_ids[100:]
@@ -104,10 +107,13 @@ def detect_objects():
 @fapp.route('/video_feed')
 def video_feed():
     if not feed_video:
-        img = image.Image(640, 480)
-        img.draw_string(20, 200, "MONITOR OFF", image.COLOR_GRAY)
-        _, jpeg = cv2.imencode('.jpg', image.image2cv(img))
-        return Response(b'data:image/jpeg;base64,' + base64.b64encode(jpeg))
+        # Create a black image with "MONITOR OFF" text
+        img = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.putText(img, "MONITOR OFF", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        _, jpeg = cv2.imencode('.jpg', img)
+        return Response(b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n',
+                       mimetype='multipart/x-mixed-replace; boundary=frame')
 
     def generate():
         global lock, annotated_frame
@@ -136,7 +142,7 @@ def stream():
                 yield f"data: {json_data}\n\n"
                 last_counts = counts.copy()
 
-            # time.sleep(0.5)
+            time.sleep(0.1)
    
     return Response(event_stream(), mimetype="text/event-stream")
 
