@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # imagesフォルダとlabelsフォルダのパスを指定
-IMAGE_FOLDER="./workspace/keihin-test-4-1000-w640h480/images/Train"
-LABEL_FOLDER="./workspace/keihin-test-4-1000-w640h480/labels/Train"
+IMAGE_FOLDER="./workspace/keihin-test-4-1000-w640h480-fine/images/val"
+LABEL_FOLDER="./workspace/keihin-test-4-1000-w640h480-fine/labels/val"
 
 # imagesフォルダ内のすべての.jpgファイルを処理
 for jpg_file in "$IMAGE_FOLDER"/*.jpg; do

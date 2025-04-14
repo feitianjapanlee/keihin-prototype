@@ -3,6 +3,8 @@
 .DS_Store
 *.cache
 *.whl
+__pycache__
 runs
 dist
 train/workspace/*
+datasets/*
