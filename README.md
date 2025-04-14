@@ -18,9 +18,12 @@
 - 効果：YOLOv11≒YOLOv8n≒YOLOv5s
 - 640x640は遅すぎなので320x320程度で現実的
 - INT8に量子化が必須
-- オーグメンテーションはYOLO搭載のもので使っているが、本番はCVATやalbumentationが必須かも
-- 認識率をUPすることより、trackerの判断ロジックはもっと重要かも
-- MaixHubでは簡単に初期バージョンできるが、現時点はv5しかできないので物足りないかも。やはりオフラインtrain
+- 初期のデータセットの作成とアノテーション、そして初期モデルのtrainはMaixHubで、
+- その後のデータセットは動画から画像を切り出し、CVATで初期モデルを利用し半自動アノテーション
+- trainとvalの分割はmv train/*10.jpg val/のように手動で行う
+- オーグメンテーションはYOLO搭載のもので使っているが、本番はalbumentationが必須かも
+- モデルの学習で認識率をUPすることより、trackerの判断ロジックはもっと重要かも
+- MaixHubでは現時点はYOLOv5しかできないので物足りないかも。やはりオフラインtrain
 
 MaixHubで作ったVOCデータセットをYOLOデータセットに変換：
 ```
@@ -30,8 +33,8 @@ python p2y-convertor.py
 オフラインtrainのDocker環境構築：
 ```bash
 nvidia-smi
-cd \workspace\keihin-prototype
-docker run -it --shm-size=2g --gpus all -p 8888:8888 -v ${PWD}:/workspace nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
+# cd \workspace\keihin-prototype
+docker run -it --shm-size=2g --gpus all -p 8888:8888 -v ${PWD}:/workspace/keihin-prototype nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
 cd workspace/keihin-prototype
 apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
 python3 -m venv .venv
@@ -50,4 +53,14 @@ docker run --privileged --name tpu-env -v ${PWD}:/workspace -it sophgo/tpuc_dev
 # so download the whl file from github release page first. 
 pip install tpu_mlir-1.17-py3-none-any.whl
 convert_yolo_onnx2cvimodel.sh
+```
+半自動アノテーション：
+```bash
+# githubからcvatをclone
+cd /workspace/cvat
+docker compose up -d
+# アノテーションする前の画像を用意し、タスクを作成
+# タスクのidをauto-annotate.pyに記入
+cd /workspace/keihin-prototype/train
+python ./auto-annotate.py
 ```
