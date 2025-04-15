@@ -42,12 +42,12 @@ def process_image(image_path, label_path, aug_transform, output_dir, idx):
     
     # Save augmented image
     aug_image = cv2.cvtColor(transformed['image'], cv2.COLOR_RGB2BGR)
-    aug_image_path = os.path.join(output_dir, 'images/train', 
+    aug_image_path = os.path.join(output_dir, 'images/val', 
                                  f"{os.path.splitext(os.path.basename(image_path))[0]}_{idx}.jpg")
     cv2.imwrite(aug_image_path, aug_image)
     
     # Save augmented labels
-    aug_label_path = os.path.join(output_dir, 'labels/train',
+    aug_label_path = os.path.join(output_dir, 'labels/val',
                                  f"{os.path.splitext(os.path.basename(image_path))[0]}_{idx}.txt")
     with open(aug_label_path, 'w') as f:
         for bbox in transformed['bboxes']:
@@ -56,19 +56,19 @@ def process_image(image_path, label_path, aug_transform, output_dir, idx):
 
 def main():
     # Set paths
-    dataset_dir = './workspace/keihin-test-4-1000-w640h480/'  # Change this to your dataset path
+    dataset_dir = './workspace/keihin-test-4-1000-w640h480-fine/'  # Change this to your dataset path
     output_dir = './workspace/keihin-test-4-1000-w640h480-aug8000/'  # Change this to your output path
     
     # Create output directories
-    os.makedirs(os.path.join(output_dir, 'images/train'), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, 'labels/train'), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, 'images/val'), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, 'labels/val'), exist_ok=True)
     
     # Get augmentation transforms
     augmentations = create_augmentations()
     
     # Process all images
-    images_dir = os.path.join(dataset_dir, 'images/Train')
-    labels_dir = os.path.join(dataset_dir, 'labels/Train')
+    images_dir = os.path.join(dataset_dir, 'images/val')
+    labels_dir = os.path.join(dataset_dir, 'labels/val')
     
     for image_file in os.listdir(images_dir):
         if not image_file.endswith(('.jpg', '.jpeg', '.png')):
