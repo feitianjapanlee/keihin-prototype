@@ -32,11 +32,16 @@ python p2y-convertor.py
 ```
 オフラインtrainのDocker環境構築：
 ```bash
+# cudaやosのリリースを確認
 nvidia-smi
-# cd \workspace\keihin-prototype
-docker run -it --shm-size=2g --gpus all -p 8888:8888 -v ${PWD}:/workspace/keihin-prototype nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-cd workspace/keihin-prototype
+lsb_release -a
+# dockerの基本パラメータを設定
+alias docker-run-it="sudo docker run -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -u $(id -u $USER):$(id -g $USER)  -e DISPLAY=$DISPLAY --net host -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v $HOME/.Xauthority:/root/.Xauthority:ro -v $HOME:$HOME:z  --shm-size 16g -it"
+# オフラインtrain（開発も併用可）のContainerを立ち上げ
+# ここではcuda12.6の例
+docker-run-it --gpus all -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
 apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
+cd <project_dir>
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -47,7 +52,7 @@ onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/ai_model_converter/maixcam.html
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/vision/customize_model_yolov8.html
 # https://github.com/sophgo/tpu-mlir/releasesから最新whlファイル(例えば、tpu_mlir-1.17-py3-none-any.whl)をダウンロード
-cd \workspace\keihin-prototype
+cd <project_dir>
 docker run --privileged --name tpu-env -v ${PWD}:/workspace -it sophgo/tpuc_dev
 # "pip install tpu_mlir" do the same but always error because download out of time,
 # so download the whl file from github release page first. 
@@ -57,10 +62,10 @@ convert_yolo_onnx2cvimodel.sh
 半自動アノテーション：
 ```bash
 # githubからcvatをclone
-cd /workspace/cvat
+cd <cvat_dir>
 docker compose up -d
 # アノテーションする前の画像を用意し、タスクを作成
 # タスクのidをauto-annotate.pyに記入
-cd /workspace/keihin-prototype/train
+cd <project_dir>/train
 python ./auto-annotate.py
 ```
