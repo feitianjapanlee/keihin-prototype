@@ -35,17 +35,17 @@ python p2y-convertor.py
 # cudaを確認
 # 必須ではないが、osのリリースを確認：lsb_release -a
 nvidia-smi
-# dockerの基本パラメータを設定
-# Windowsがホストの場合はコマンドラインで入力
-alias docker-run-it="sudo docker run -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -u $(id -u $USER):$(id -g $USER)  -e DISPLAY=$DISPLAY --net host -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v $HOME/.Xauthority:/root/.Xauthority:ro -v $HOME:$HOME:z  --shm-size 16g -it"
 # オフラインtrain（開発も併用可）のContainerを立ち上げ
 # ホストのcudaがサポートできるcudaのdocker imageを選択。ここではcuda12.6の例
-docker-run-it --gpus all -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
 cd <project_dir>
-python3 -m venv .venv
-source .venv/bin/activate
+docker run -it --gpus all --shm-size 16g -v ${PWD}:/workspace -w /workspace -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
+apt update -y && apt upgrade -y && apt install vim git python3 python3.10-venv libopencv-dev
+cd /workspace
+python3 -m venv .venvD
+source .venvD/bin/activate
 pip install -r requirements.txt
+# jupterを使う場合は、下記コマンド
+# 開発する場合はホストのvscodeからこのcontainerをremote dev containerとしてattach
 jupyter notebook --allow-root --ip="0.0.0.0"
 ```
 onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子化)：
