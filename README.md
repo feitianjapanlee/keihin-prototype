@@ -39,10 +39,10 @@ nvidia-smi
 # ホストのcudaがサポートできるcudaのdocker imageを選択。ここではcuda12.6の例
 cd <project_dir>
 docker run -it --gpus all --shm-size 16g -v ${PWD}:/workspace -w /workspace -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-apt update -y && apt upgrade -y && apt install -y vim git python3 python3-venv libopencv-dev
-cd /workspace
-python3 -m venv .venvD
-source .venvD/bin/activate
+apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv libopencv-dev
+# ホストと異なるOSの場合は
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 # jupterを使う場合は、下記コマンド
 # 開発する場合はホストのvscodeからこのcontainerをremote dev containerとしてattach
