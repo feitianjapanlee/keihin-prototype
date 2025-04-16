@@ -32,13 +32,14 @@ python p2y-convertor.py
 ```
 オフラインtrainのDocker環境構築：
 ```bash
-# cudaやosのリリースを確認
+# cudaを確認
+# 必須ではないが、osのリリースを確認：lsb_release -a
 nvidia-smi
-lsb_release -a
 # dockerの基本パラメータを設定
+# Windowsがホストの場合はコマンドラインで入力
 alias docker-run-it="sudo docker run -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -u $(id -u $USER):$(id -g $USER)  -e DISPLAY=$DISPLAY --net host -v /tmp/.X11-unix:/tmp/.X11-unix:ro -v $HOME/.Xauthority:/root/.Xauthority:ro -v $HOME:$HOME:z  --shm-size 16g -it"
 # オフラインtrain（開発も併用可）のContainerを立ち上げ
-# ここではcuda12.6の例
+# ホストのcudaがサポートできるcudaのdocker imageを選択。ここではcuda12.6の例
 docker-run-it --gpus all -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
 apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
 cd <project_dir>
