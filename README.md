@@ -30,16 +30,22 @@ MaixHubで作ったVOCデータセットをYOLOデータセットに変換：
 cd train
 python p2y-convertor.py
 ```
-オフラインtrainのDocker環境構築：
+オフラインtrainのDocker環境構築：（ホストの環境）
 ```bash
+# cudaを確認
+# 必須ではないが、osのリリースを確認：lsb_release -a
 nvidia-smi
-# cd \workspace\keihin-prototype
-docker run -it --shm-size=2g --gpus all -p 8888:8888 -v ${PWD}:/workspace/keihin-prototype nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-cd workspace/keihin-prototype
-apt update -y && apt upgrade -y && apt install python3 python3.10-venv libopencv-dev
-python3 -m venv .venv
-source .venv/bin/activate
+# オフラインtrain（開発も併用可）のContainerを立ち上げ
+# ホストのcudaがサポートできるcudaのdocker imageを選択。ここではcuda12.6の例
+cd <project_dir>
+docker run -it --gpus all --shm-size 16g -v ${PWD}:/workspace -w /workspace -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
+apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv ipykernel libopencv-dev
+# ホストと異なるOSやPythonバージョンの場合は
+python3 -m venv .venvD
+source .venvD/bin/activate
 pip install -r requirements.txt
+# jupterを使う場合は、下記コマンド
+# 開発する場合はホストのvscodeからこのcontainerをremote dev containerとしてattach
 jupyter notebook --allow-root --ip="0.0.0.0"
 ```
 onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子化)：
@@ -47,7 +53,7 @@ onnxモデルをMaixCamで動作できるmud形式（cvimodel）に変換(量子
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/ai_model_converter/maixcam.html
 # 参考: https://wiki.sipeed.com/maixpy/doc/en/vision/customize_model_yolov8.html
 # https://github.com/sophgo/tpu-mlir/releasesから最新whlファイル(例えば、tpu_mlir-1.17-py3-none-any.whl)をダウンロード
-cd \workspace\keihin-prototype
+cd <project_dir>
 docker run --privileged --name tpu-env -v ${PWD}:/workspace -it sophgo/tpuc_dev
 # "pip install tpu_mlir" do the same but always error because download out of time,
 # so download the whl file from github release page first. 
@@ -57,10 +63,10 @@ convert_yolo_onnx2cvimodel.sh
 半自動アノテーション：
 ```bash
 # githubからcvatをclone
-cd /workspace/cvat
+cd <cvat_dir>
 docker compose up -d
 # アノテーションする前の画像を用意し、タスクを作成
 # タスクのidをauto-annotate.pyに記入
-cd /workspace/keihin-prototype/train
+cd <project_dir>/train
 python ./auto-annotate.py
 ```
