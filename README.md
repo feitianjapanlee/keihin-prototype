@@ -30,19 +30,25 @@ MaixHubで作ったVOCデータセットをYOLOデータセットに変換：
 cd train
 python p2y-convertor.py
 ```
-オフラインtrainのDocker環境構築：（ホストの環境）
+オフラインtrainのDocker環境構築：（ホストの環境はWindowsなど不便の場合）
 ```bash
 # cudaを確認
 # 必須ではないが、osのリリースを確認：lsb_release -a
 nvidia-smi
 # オフラインtrain（開発も併用可）のContainerを立ち上げ
 # ホストのcudaがサポートできるcudaのdocker imageを選択。ここではcuda12.6の例
+# -p 8888:8888はjupyterのため
+# docker.sock関係はコンテナ内から他のコンテナを操作するため
 cd <project_dir>
-docker run -it --gpus all --shm-size 16g -v ${PWD}:/workspace -w /workspace -p 8888:8888 nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
+docker run -it --gpus all --shm-size 16g \
+           -v /var/run/docker.sock:/var/run/docker.sock \
+           -v ${PWD}:/workspace -w /workspace \
+           -p 8888:8888 \
+           nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
 apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv ipykernel libopencv-dev
 # ホストと異なるOSやPythonバージョンの場合は
-python3 -m venv .venvD
-source .venvD/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 # jupterを使う場合は、下記コマンド
 # 開発する場合はホストのvscodeからこのcontainerをremote dev containerとしてattach
@@ -70,3 +76,18 @@ docker compose up -d
 cd <project_dir>/train
 python ./auto-annotate.py
 ```
+Data Augmentation：
+```
+cd train
+python augmentate.py
+```
+
+## Todo
+- 物体が重なるAugmentation
+- 全自動パイプライン（AutoML）
+- ハイパパラメータのチュニング
+- 大モデル11m or 11lをtrainしてアノテーション用に
+
+
+
+
