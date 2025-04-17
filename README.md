@@ -77,7 +77,7 @@ docker compose up -d
 cd <project_dir>/train
 python ./auto-annotate.py
 ```
-Data Augmentation：
+静的Data Augmentation：
 ```
 cd train
 python augmentate.py
