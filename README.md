@@ -45,7 +45,7 @@ docker run -it --gpus all --shm-size 16g \
            -v ${PWD}:/workspace -w /workspace \
            -p 8888:8888 \
            nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv ipykernel libopencv-dev
+apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv libopencv-dev
 # ホストと異なるOSやPythonバージョンの場合は
 python3 -m venv .venv
 source .venv/bin/activate
