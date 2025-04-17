@@ -49,6 +49,7 @@ apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip py
 # ホストと異なるOSやPythonバージョンの場合は
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -U pip
 pip install -r requirements.txt
 # jupterを使う場合は、下記コマンド
 # 開発する場合はホストのvscodeからこのcontainerをremote dev containerとしてattach
