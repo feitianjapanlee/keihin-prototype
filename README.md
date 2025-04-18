@@ -45,10 +45,11 @@ docker run -it --gpus all --shm-size 16g \
            -v ${PWD}:/workspace -w /workspace \
            -p 8888:8888 \
            nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 bash
-apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv ipykernel libopencv-dev
+apt update -y && apt upgrade -y && apt install -y vim git python3 python3-pip python3-venv libopencv-dev
 # ホストと異なるOSやPythonバージョンの場合は
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -U pip
 pip install -r requirements.txt
 # jupterを使う場合は、下記コマンド
 # 開発する場合はホストのvscodeからこのcontainerをremote dev containerとしてattach
@@ -76,10 +77,20 @@ docker compose up -d
 cd <project_dir>/train
 python ./auto-annotate.py
 ```
-Data Augmentation：
+静的Data Augmentation：
 ```
 cd train
 python augmentate.py
+```
+Dev containerにdocker clientをインストール：
+```
+apt install -y ca-certificates curl gnupg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable' | tee /etc/apt/sources.list.d/docker.list
+apt update -y
+apt install docker-ce-cli
+# CLIのみならdocker-ce-cli。エンジンも必要なら
+# apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ## Todo
