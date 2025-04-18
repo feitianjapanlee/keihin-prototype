@@ -1,0 +1,46 @@
+# All Hyperparameters and Augmentations can be found here: https://docs.ultralytics.com/modes/train/#augmentation-settings-and-hyperparameters
+
+# 'mode' is required only for CLI usage
+mode: train
+
+data: ../datasets/keihin-test-4-1000-w640h480-fine-aug7x/data.yaml
+model: yolo11n.pt
+epochs: 3  # Number of training epochs
+patience: 50  # Early stopping patience
+batch: 8
+imgsz: 640   # Image size for training
+device: 0    # Device to run on (e.g., 'cpu', 0, [0,1,2,3])
+
+# Augmentation Settings
+augment: True   # Use augmentation
+close_mosaic: True   # Close mosaic augmentation
+# Adjusts the hue of the image by a fraction of the color wheel. Range: 0.0 - 1.0
+hsv_h: 0.015
+# Alters the saturation of the image by a fraction. Range: 0.0 - 1.0  
+hsv_s: 0.7
+# Modifies the value (brightness) of the image by a fraction. Range: 0.0 - 1.0
+hsv_v: 0.4
+# Rotates the image randomly within the specified degree range. Range: -180 - +180
+degrees: 0.0
+# Translates the image horizontally and vertically by a fraction of the image size. Range: 0.0 - 1.0
+translate: 0.1
+# Scales the image by a gain factor. Range: >=0.0
+scale: 0.5
+# Shears the image by a specified degree. Range: -180 - +180
+shear: 0.0
+# Applies a random perspective transformation to the image. Range: 0.0 - 0.001
+perspective: 0.0
+# Flips the image upside down with the specified probability. Range: 0.0 - 1.0
+flipud: 0.5
+# Flips the image left to right with the specified probability. Range: 0.0 - 1.0
+fliplr: 0.5
+# Combines four training images into one. Range: 0.0 - 1.0
+mosaic: 0.25
+# Blends two images and their labels, creating a composite image.
+mixup: 0.0
+# Copies objects from one image and pastes them onto another, useful for increasing object instances and learning object occlusion.
+copy_paste: 0.0
+# Automatically applies a predefined augmentation policy. (randaugment, autoaugment, augmix)
+auto_augment: randaugment 
+# Randomly erases a portion of the image
+erasing: 0.4
