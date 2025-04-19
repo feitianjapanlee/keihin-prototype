@@ -7,13 +7,22 @@ import albumentations as A
 def create_augmentations():
     """Create a list of augmentation pipelines"""
     augmentations = [
-        A.HorizontalFlip(p=1.0),
-        A.VerticalFlip(p=1.0),
-        A.GaussNoise(p=1.0),
-        A.RandomRotate90(p=1.0),
-        A.RandomGamma(p=1.0),
-        A.RandomBrightnessContrast(p=1.0),
-        A.CoarseDropout(p=1.0)
+        # A.MedianBlur(p=0.5),
+        # A.GaussianBlur(p=0.5),
+        # A.MotionBlur(p=0.5),
+        # A.CLAHE(p=0.5),
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+        A.GaussNoise(p=0.5),
+        A.RandomRotate90(p=0.5),
+        A.RandomGamma(p=0.5),
+        A.RandomBrightnessContrast(p=0.5),
+        A.ImageCompression(p=0.5),
+        A.ISONoise(p=0.5),
+        A.HueSaturationValue(p=0.5),
+        A.RandomSunFlare(p=0.5),
+        A.RandomShadow(p=0.5),
+        A.CoarseDropout(p=0.5),
     ]
     
     return [A.Compose(
@@ -60,7 +69,7 @@ def main(org_dataset_dir, subset_dir):
     # Set paths
     dataset_dir = org_dataset_dir
     output_dir = org_dataset_dir[:-1] if org_dataset_dir.endswith('/') else org_dataset_dir
-    output_dir = f'{output_dir}-aug{len(augmentations)}x/'
+    output_dir = f'{output_dir}-aug{len(augmentations)//2}x/'
    
     # Create output directories
     os.makedirs(os.path.join(output_dir, f'images/{subset_dir}'), exist_ok=True)
@@ -84,4 +93,4 @@ def main(org_dataset_dir, subset_dir):
 
 if __name__ == "__main__":
     main('../datasets/keihin-test-4-1000-w640h480-fine/', 'train')
-    main('../datasets/keihin-test-4-1000-w640h480-fine/', 'val')
+    # main('../datasets/keihin-test-4-1000-w640h480-fine/', 'val') # Usually do not augment validation set

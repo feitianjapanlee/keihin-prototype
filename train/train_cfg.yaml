@@ -5,11 +5,12 @@ mode: train
 
 data: ../datasets/keihin-test-4-1000-w640h480-fine-aug7x/data.yaml
 model: yolo11n.pt
-epochs: 3  # Number of training epochs
+epochs: 300  # Number of training epochs
 patience: 50  # Early stopping patience
-batch: 8
+batch: 16  # Batch size
 imgsz: 640   # Image size for training
 device: 0    # Device to run on (e.g., 'cpu', 0, [0,1,2,3])
+
 
 # Augmentation Settings
 augment: True   # Use augmentation
