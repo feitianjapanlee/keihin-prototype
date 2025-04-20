@@ -96,8 +96,8 @@ apt install docker-ce-cli
 
 ## Todo
 - 物体が重なるAugmentation
-- 全自動パイプライン（AutoML）
-- ハイパパラメータのチュニング
+- 全自動パイプライン
+- ハイパパラメータのチュニング(WandB)
 - 大モデル11m or 11lをtrainしてアノテーション用に
 
 
