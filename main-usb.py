@@ -11,10 +11,10 @@ import threading
 import time
 from collections import defaultdict
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # グローバル変数
-model_name = "models/train48/weights/best.onnx"
+model_name = "models/train61/weights/best.pt"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
@@ -69,7 +69,8 @@ def detect_objects():
             time.sleep(1)
             continue
         
-        # print("フレームを取得しました")  # デバッグメッセージ
+        # frame = [frame[:, :, ::-1]]  # BGR to RGB
+        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # BGR to RGB
 
         # 推論 (軽量化のため解像度を下げる)
         results = model.track(
@@ -132,19 +133,13 @@ def detect_objects():
 @app.route('/video_feed')
 def video_feed():
     global feed_video
-    if not feed_video:
-        # Create a black image with "MONITOR OFF" text
-        img = np.zeros((480, 640, 3), dtype=np.uint8)
-        cv2.putText(img, "MONITOR OFF", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        _, jpeg = cv2.imencode('.jpg', img)
-        return Response(b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n',
-                       mimetype='multipart/x-mixed-replace; boundary=frame')
-
     # Video stream generator
     def generate():
         global lock, annotated_frame
         while True:
+            if not feed_video:
+                time.sleep(0.1)
+                continue
             with lock:
                 if annotated_frame is not None:
                     _, jpeg = cv2.imencode('.jpg', annotated_frame)
@@ -168,7 +163,7 @@ def stream():
                 yield f"data: {json_data}\n\n"
                 last_counts = counts.copy()
 
-            time.sleep(0.1)
+            time.sleep(0.05)    
    
     return Response(event_stream(), mimetype="text/event-stream")
 
@@ -240,7 +235,7 @@ def index():
     </head>
     <body class="bg-dark text-white">
         <div class="container mt-3">
-            <h1 class="text-center mb-4">リアルタイム物体識別</h1>
+            <h1 class="text-center mb-4">景品検出モニター</h1>
             
             <div class="row">
                 <div class="col-12">
@@ -250,7 +245,7 @@ def index():
                     </div>
                 </div>
             </div>
-            
+
             <div class="row">
                 <div class="col-md-8 mx-auto">
                     <div class="card bg-secondary">
@@ -262,6 +257,19 @@ def index():
                 </div>
             </div>
             
+            <div class="row mt-3">
+                <div class="col-md-8 mx-auto">
+                    <div class="card bg-secondary">
+                        <div class="card-body">
+                            <h5 class="card-title">検出計数</h5>
+                            <div id="countDisplay">
+                                <div class="text-center">データ読み込み中...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row mt-3">
                 <div class="col-md-8 mx-auto">
                     <div class="card bg-secondary">
@@ -283,19 +291,7 @@ def index():
                     </div>
                 </div>
             </div>
-            
-            <div class="row mt-3">
-                <div class="col-md-8 mx-auto">
-                    <div class="card bg-secondary">
-                        <div class="card-body">
-                            <h5 class="card-title">検出計数</h5>
-                            <div id="countDisplay">
-                                <div class="text-center">データ読み込み中...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </div>
         
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -352,7 +348,7 @@ def index():
                 countDisplay.innerHTML = '';
                 for (const [className, count] of Object.entries(newCounts.counts)) {
                     const div = document.createElement('div', {class: 'detection-item'});
-                    div.innerHTML = `<span><img src='${className}.png'>${className}:</span><span class='badge bg-primary rounded-pill'>${count}</span>`;
+                    div.innerHTML = `<h3><span><img src='/static/${className}.png'>${className}:</span><span class='badge bg-primary rounded-pill'>${count}</span></h3>`;
                     countDisplay.appendChild(div);
                 }
             };
