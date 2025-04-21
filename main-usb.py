@@ -47,6 +47,9 @@ def init_camera():
     
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 500)  # Skip the first 500 frames to allow the camera to adjust
+    
     return True
 
 def detect_objects():
@@ -148,24 +151,10 @@ def video_feed():
             time.sleep(0.1)
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/stream')
-def stream():
-    def event_stream():
-        global counts, last_counts, detected_objects
-        while True:
-            # カウントに変更があった場合のみ送信
-            if counts != last_counts:
-                data = {
-                    'counts': dict(counts),
-                    'objects': detected_objects
-                }
-                json_data = json.dumps(data)
-                yield f"data: {json_data}\n\n"
-                last_counts = counts.copy()
-
-            time.sleep(0.05)    
-   
-    return Response(event_stream(), mimetype="text/event-stream")
+@app.route('/get_counts')
+def get_counts():
+    global counts
+    return jsonify(counts)
 
 @app.route('/toggle_stream')
 def toggle_stream():
@@ -339,19 +328,29 @@ def index():
             
         </script>
         <script>
-            const evtSource = new EventSource("/stream");
-            evtSource.onmessage = function(event) {
-                const newCounts = JSON.parse(event.data);
-                console.info("更新:", newCounts);
-                // カウント表示を更新
-                const countDisplay = document.getElementById('countDisplay');
-                countDisplay.innerHTML = '';
-                for (const [className, count] of Object.entries(newCounts.counts)) {
-                    const div = document.createElement('div', {class: 'detection-item'});
-                    div.innerHTML = `<h3><span><img src='/static/${className}.png'>${className}:</span><span class='badge bg-primary rounded-pill'>${count}</span></h3>`;
-                    countDisplay.appendChild(div);
-                }
+            function updateDetectionStats() {
+                fetch('/get_counts')
+                    .then(response => response.json())
+                    .then(data => {
+                        const countDisplay = document.getElementById('countDisplay');
+                        if (Object.keys(data).length === 0) {
+                            countDisplay.innerHTML = '<div class="text-center">検出された物体はありません</div>';
+                            return;
+                        }
+                        countDisplay.innerHTML = '';
+                        for (const [className, count] of Object.entries(data)) {
+                            const div = document.createElement('div', {class: 'detection-item'});
+                            div.innerHTML = `<h3><span><img src='/static/${className}.png'>${className}:</span><span class='badge bg-primary rounded-pill'>${count}</span></h3>`;
+                            countDisplay.appendChild(div);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching counts:', error);
+                    });
             };
+            setInterval(updateDetectionStats, 1000);  // 1秒ごとに更新
+            // 初回読み込み時にカウントを取得
+            updateDetectionStats();
         </script>
     </body>
     </html>
