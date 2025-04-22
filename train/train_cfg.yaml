@@ -3,7 +3,7 @@
 # 'mode' is required only for CLI usage
 mode: train
 
-data: ../datasets/keihin-test-4-1000-w640h480-fine-aug7x/data.yaml
+data: ../datasets/keihin-test-4-1000-w640h480-fine-aug6x/data.yaml
 model: yolo11n.pt
 epochs: 300  # Number of training epochs
 patience: 50  # Early stopping patience
