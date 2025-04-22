@@ -7,7 +7,7 @@ import time
 from collections import defaultdict
 # import numpy as np
 
-fapp = Flask(__name__, static_url_path='/static', static_folder='static')
+fapp = Flask(__name__, static_url_path='/static', static_folder='/root/static')
 
 # グローバル変数
 model_name = "/root/models/train48_yolo11n_320.mud"
@@ -114,10 +114,9 @@ def video_feed():
                 continue
             with lock:
                 if annotated_frame is not None:
-                    with lock:
-                        _, jpeg = cv2.imencode('.jpg', image.image2cv(annotated_frame))
-                        yield (b'--frame\r\n'
-                                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+                    _, jpeg = cv2.imencode('.jpg', image.image2cv(annotated_frame))
+                    yield (b'--frame\r\n'
+                            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
             time.sleep(0.1)
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
