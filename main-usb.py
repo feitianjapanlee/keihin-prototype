@@ -14,7 +14,7 @@ from collections import defaultdict
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # グローバル変数
-model_name = "models/train61/weights/best.pt"
+model_name = "models/train64/weights/best.pt"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
@@ -124,8 +124,8 @@ def detect_objects():
                     print(f"track_id: {track_id}, cls: {model.names[int(cls)]} is already counted.")  # デバッグメッセージ
 
         # remove some history do not need
-        if len(counted_ids) > 200:
-            counted_ids = counted_ids[100:]
+        if len(counted_ids) > 100:
+            counted_ids.discard(min(counted_ids))
 
         # print(f"counts: {counts}")  # デバッグメッセージ
         detected_objects = current_objects
