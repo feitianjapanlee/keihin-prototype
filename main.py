@@ -1,13 +1,13 @@
 from maix import camera, image, nn, app, tracker, touchscreen, display, sys
-from flask import Flask, Response
+from flask import Flask, Response, request, jsonify
 import cv2  # only for JPEG encode
-import numpy as np
 import json
 import threading
 import time
 from collections import defaultdict
+# import numpy as np
 
-fapp = Flask(__name__)
+fapp = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # グローバル変数
 model_name = "/root/models/train48_yolo11n_320.mud"
@@ -20,9 +20,9 @@ annotated_frame = None
 draw_detect = True     # whether to draw image of detected objects
 feed_video = True      # whether to feed result image to web
 
-detect_confi_threshold = 0.7        # confidence threshold of detection
+detect_confi_threshold = 0.5        # confidence threshold of detection
 detect_iou_threshold = 0.5          # iou threshold of detection
-max_lost_buff_frame = 20            # frames to keep before mark as lost
+max_lost_buff_frame = 10            # frames to keep before mark as lost
 track_threshold = 0.4               # confidence threshold to continue track
 high_threshold = 0.5                # confidence threshold to new a track
 match_threshold = 0.8               # iou threshold to treat as same object
@@ -106,29 +106,24 @@ def detect_objects():
 
 @fapp.route('/video_feed')
 def video_feed():
-    if not feed_video:
-        # Create a black image with "MONITOR OFF" text
-        img = np.zeros((480, 640, 3), dtype=np.uint8)
-        cv2.putText(img, "MONITOR OFF", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        _, jpeg = cv2.imencode('.jpg', img)
-        return Response(b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n',
-                       mimetype='multipart/x-mixed-replace; boundary=frame')
-
     def generate():
-        global lock, annotated_frame
+        global lock, annotated_frame, feed_video
         while True:
-            if annotated_frame is not None:
-                with lock:
-                    _, jpeg = cv2.imencode('.jpg', image.image2cv(annotated_frame))
-                    yield (b'--frame\r\n'
-                            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-            time.sleep(0.2)
+            if not feed_video:
+                time.sleep(0.1)
+                continue
+            with lock:
+                if annotated_frame is not None:
+                    with lock:
+                        _, jpeg = cv2.imencode('.jpg', image.image2cv(annotated_frame))
+                        yield (b'--frame\r\n'
+                                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+            time.sleep(0.1)
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@fapp.route('/stream')
-def stream():
+@fapp.route('/counts_updated')
+def counts_updated():
     def event_stream():
         global counts, last_counts, detected_objects
         while True:
@@ -136,7 +131,7 @@ def stream():
             if counts != last_counts:
                 data = {
                     'counts': dict(counts),
-                    'objects': detected_objects
+                    # 'objects': detected_objects
                 }
                 json_data = json.dumps(data)
                 yield f"data: {json_data}\n\n"
@@ -146,47 +141,214 @@ def stream():
    
     return Response(event_stream(), mimetype="text/event-stream")
 
+@fapp.route('/get_counts')
+def get_counts():
+    global counts
+    return jsonify(counts)
+
+@fapp.route('/toggle_video')
+def toggle_video():
+    global feed_video
+    state = request.args.get('state', 'on')
+    feed_video = (state == 'on')
+    return jsonify({'status': 'success', 'video_active': feed_video})
+
+@fapp.route('/update_threshold', methods=['POST'])
+def update_threshold():
+    global detect_confi_threshold
+    detect_confi_threshold = float(request.form.get('threshold', 0.5))
+    return jsonify({'status': 'success', 'new_threshold': detect_confi_threshold})
+
+@fapp.route('/reset_counts')
+def reset_counts():
+    global counts
+    counts.clear()
+    return jsonify({'status': 'success'})
+
+
 @fapp.route('/')
 def index():
     return """
-    <html>
+    <!DOCTYPE html>
+    <html lang="ja">
     <head>
         <meta charset="UTF-8">
-        <style type="text/css">
-            #count-display { font-size: 1.6em }
-            .count-value { font-size: 1.6em; color: red; }
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>景品検出モニター</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .card {
+                margin-bottom: 20px;
+            }
+            .detection-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid #444;
+            }
+            .btn-group {
+                margin-bottom: 15px;
+            }
+            #videoContainer {
+                position: relative;
+            }
+            #videoPlaceholder {
+                display: none;
+                width: 100%;
+                height: 240px;
+                background-color: #333;
+                color: white;
+                text-align: center;
+                line-height: 240px;
+            }
+            @media (max-width: 768px) {
+                .slider-container {
+                    padding: 0 15px;
+                }
+                #videoFeed, #videoPlaceholder {
+                    height: 240px;
+                    line-height: 240px;
+                }
+            }
         </style>
     </head>
-    <body>
-        <h1>景品検出モニター</h1>
-
-        <div class="container">
-            <div>
-                <img id="video-feed" src="/video_feed" width="640">
-            </div>
+    <body class="bg-dark text-white">
+        <div class="container mt-3">
+            <h1 class="text-center mb-4">景品検出モニター</h1>
             
-            <div class="count-panel">
-                <h2>カウント結果</h2>
-                <div id="count-display">
-                    <!-- カウントデータがここに表示されます -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="btn-group w-100">
+                        <button id="toggleVideoFeedSwitch" class="btn btn-primary">ストリーム停止</button>
+                        <button id="resetCounts" class="btn btn-warning">カウントリセット</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <div class="card bg-secondary">
+                        <div class="card-body p-0" id="videoContainer">
+                            <img id="videoFeed" src="/video_feed" class="img-fluid">
+                            <div id="videoPlaceholder">ストリームは停止中です</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-        </div>
+            <div class="row mt-3">
+                <div class="col-md-8 mx-auto">
+                    <div class="card bg-secondary">
+                        <div class="card-body">
+                            <h5 class="card-title">検出計数</h5>
+                            <div id="countDisplay">
+                                <div class="text-center">データ読み込み中...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <div class="row mt-3">
+                <div class="col-md-8 mx-auto">
+                    <div class="card bg-secondary">
+                        <div class="card-body">
+                            <h5 class="card-title">検出閾値調整</h5>
+                            <div class="slider-container">
+                                <input type="range" class="form-range" min="0" max="1" step="0.1" 
+                                       id="confidenceSlider" value="0.5">
+                                <div class="d-flex justify-content-between">
+                                    <small>0.0</small>
+                                    <small>0.5</small>
+                                    <small>1.0</small>
+                                </div>
+                                <div class="text-center mt-2">
+                                    現在の閾値: <span id="thresholdValue">0.5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            const evtSource = new EventSource("/stream");
+            // ストリームのON/OFF切り替え
+            const toggleBtn = document.getElementById('toggleVideoFeedSwitch');
+            const videoFeed = document.getElementById('videoFeed');
+            const videoPlaceholder = document.getElementById('videoPlaceholder');
+            
+            toggleBtn.addEventListener('click', function() {
+                if (this.textContent === 'ストリーム停止') {
+                    videoFeed.style.display = 'none';
+                    videoPlaceholder.style.display = 'block';
+                    this.textContent = 'ストリーム開始';
+                    fetch('/toggle_video?state=off');
+                } else {
+                    videoFeed.style.display = 'block';
+                    videoPlaceholder.style.display = 'none';
+                    this.textContent = 'ストリーム停止';
+                    fetch('/toggle_video?state=on');
+                }
+            });
+            
+            // カウントリセット
+            document.getElementById('resetCounts').addEventListener('click', function() {
+                fetch('/reset_counts');
+                // updateDetectionStats();  // 即時更新
+            });
+            
+            // 検出閾値スライダー
+            const confidenceSlider = document.getElementById('confidenceSlider');
+            const thresholdValue = document.getElementById('thresholdValue');
+            
+            confidenceSlider.addEventListener('input', function() {
+                const value = this.value;
+                thresholdValue.textContent = value;
+                
+                // 閾値更新をサーバーに送信
+                fetch('/update_threshold', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'threshold=' + value
+                });
+            });
+            
+        </script>
+        <script>
+            function updateDetectionStats() {
+                fetch('/get_counts')
+                    .then(response => response.json())
+                    .then(data => {
+                        const countDisplay = document.getElementById('countDisplay');
+                        if (Object.keys(data).length === 0) {
+                            countDisplay.innerHTML = '<div class="text-center">検出された物体はありません</div>';
+                            return;
+                        }
+                        countDisplay.innerHTML = '';
+                        for (const [className, count] of Object.entries(data)) {
+                            const div = document.createElement('div', {class: 'detection-item'});
+                            div.innerHTML = `<h3><span><img src='/static/${className}.png'>${className}:</span><span class='badge bg-primary rounded-pill'>${count}</span></h3>`;
+                            countDisplay.appendChild(div);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching counts:', error);
+                    });
+            };
+            setInterval(updateDetectionStats, 1000);  // 1秒ごとに更新
+            // 初回読み込み時にカウントを取得
+            updateDetectionStats();
+        </script>
+        <script>
+            const evtSource = new EventSource("/counts_updated");
             evtSource.onmessage = function(event) {
                 const newCounts = JSON.parse(event.data);
                 console.info("更新:", newCounts);
                 // カウント表示を更新
-                const countDisplay = document.getElementById('count-display');
-                countDisplay.innerHTML = '';
-                for (const [className, count] of Object.entries(newCounts.counts)) {
-                    const div = document.createElement('div');
-                    div.innerHTML = `<strong>${className}:</strong> <span class="count-value">${count}</span>`;
-                    countDisplay.appendChild(div);
-                }
+                updateDetectionStats();
             };
         </script>
     </body>

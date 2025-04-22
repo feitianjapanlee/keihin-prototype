@@ -2,14 +2,14 @@
 # pip install ultralytics opencv-python flask numpy
 
 import cv2
-# import base64
-import numpy as np
 from ultralytics import YOLO
 from flask import Flask, Response, request, jsonify
 import json
 import threading
 import time
 from collections import defaultdict
+# import base64
+# import numpy as np
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
@@ -37,9 +37,9 @@ cap = None
 def init_camera():
     global cap
     # MaixCam用設定 (適宜調整)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        cap = cv2.VideoCapture(2, cv2.CAP_V4L2)
     
     if not cap.isOpened():
         print("Error: カメラを開けません")
@@ -48,8 +48,6 @@ def init_camera():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 500)  # Skip the first 500 frames to allow the camera to adjust
-    
     return True
 
 def detect_objects():
@@ -135,10 +133,8 @@ def detect_objects():
 
 @app.route('/video_feed')
 def video_feed():
-    global feed_video
-    # Video stream generator
     def generate():
-        global lock, annotated_frame
+        global lock, annotated_frame, feed_video
         while True:
             if not feed_video:
                 time.sleep(0.1)
@@ -156,12 +152,12 @@ def get_counts():
     global counts
     return jsonify(counts)
 
-@app.route('/toggle_stream')
-def toggle_stream():
+@app.route('/toggle_video')
+def toggle_video():
     global feed_video
     state = request.args.get('state', 'on')
     feed_video = (state == 'on')
-    return jsonify({'status': 'success', 'stream_active': feed_video})
+    return jsonify({'status': 'success', 'video_active': feed_video})
 
 @app.route('/update_threshold', methods=['POST'])
 def update_threshold():
@@ -175,6 +171,24 @@ def reset_counts():
     counts.clear()
     return jsonify({'status': 'success'})
 
+@app.route('/counts_updated')
+def counts_updated():
+    def event_stream():
+        global counts, last_counts
+        while True:
+            # カウントに変更があった場合のみ送信
+            if counts != last_counts:
+                data = {
+                    'counts': dict(counts),
+                    # 'objects': detected_objects
+                }
+                json_data = json.dumps(data)
+                yield f"data: {json_data}\n\n"
+                last_counts = counts.copy()
+
+            time.sleep(0.1)
+   
+    return Response(event_stream(), mimetype="text/event-stream")
 
 @app.route('/')
 def index():
@@ -184,7 +198,7 @@ def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>物体識別モニタリング</title>
+        <title>景品検出モニター</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
             .card {
@@ -295,12 +309,12 @@ def index():
                     videoFeed.style.display = 'none';
                     videoPlaceholder.style.display = 'block';
                     this.textContent = 'ストリーム開始';
-                    fetch('/toggle_stream?state=off');
+                    fetch('/toggle_video?state=off');
                 } else {
                     videoFeed.style.display = 'block';
                     videoPlaceholder.style.display = 'none';
                     this.textContent = 'ストリーム停止';
-                    fetch('/toggle_stream?state=on');
+                    fetch('/toggle_video?state=on');
                 }
             });
             
@@ -351,6 +365,15 @@ def index():
             setInterval(updateDetectionStats, 1000);  // 1秒ごとに更新
             // 初回読み込み時にカウントを取得
             updateDetectionStats();
+        </script>
+        <script>
+            const evtSource = new EventSource("/counts_updated");
+            evtSource.onmessage = function(event) {
+                const newCounts = JSON.parse(event.data);
+                console.info("更新:", newCounts);
+                // カウント表示を更新
+                updateDetectionStats();
+            };
         </script>
     </body>
     </html>
