@@ -13,16 +13,16 @@ def create_augmentations():
         # A.CLAHE(p=1),
         A.HorizontalFlip(p=1),
         A.VerticalFlip(p=1),
-        A.GaussNoise(p=1),
+        A.GaussNoise(p=1, std_range=(0.05, 0.1)),
         A.RandomRotate90(p=1),
         A.RandomGamma(p=1),
         A.RandomBrightnessContrast(p=1),
-        A.ImageCompression(p=1),
-        A.ISONoise(p=1),
+        # A.ImageCompression(p=1),
+        # A.ISONoise(p=1),
         # A.HueSaturationValue(p=1),
-        A.RandomSunFlare(p=1),
-        A.RandomShadow(p=1),
-        A.CoarseDropout(p=1),
+        # A.RandomSunFlare(p=1),
+        # A.RandomShadow(p=1),
+        # A.CoarseDropout(p=1),
     ]
     
     return [A.Compose(
