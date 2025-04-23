@@ -10,7 +10,7 @@ from collections import defaultdict
 fapp = Flask(__name__, static_url_path='/static', static_folder='/root/static')
 
 # グローバル変数
-model_name = "/root/models/train48_yolo11n_320.mud"
+model_name = "/root/models/train64_yolo11n_320.mud"
 counts = defaultdict(int)
 last_counts = defaultdict(int)
 track_history = defaultdict(list)
@@ -91,8 +91,8 @@ def detect_objects():
                 print(f"track.id: {track.id}, cls: {detector.labels[obj.class_id]} is already counted.")  # デバッグメッセージ
 
         # remove some history do not need
-        if len(counted_ids) > 200:
-            counted_ids = counted_ids[100:]
+        if len(counted_ids) > 100:
+            counted_ids.discard(min(counted_ids))
 
         # draw tracking objects with red color
         if draw_detect:

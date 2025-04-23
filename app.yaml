@@ -1,10 +1,14 @@
 id: keihin_counter
 name: Keihin Counter
-version: 0.1.48
+version: 0.1.64
 author: Feitian Japan Co., Ltd.
 icon: app.png
 desc: Keihin Counter prototype run on MaixCam board.
 files:
+  - static/bluefish.png
+  - static/dogclip.png
+  - static/leafairy.png
+  - static/whitefish.png
   - app.png
   - app.yaml
   - main.py
