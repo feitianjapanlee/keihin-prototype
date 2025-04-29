@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  keihin-dev:
+    image: nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04
+    container_name: keihin-dev
+    runtime: nvidia  # NVIDIA GPUを使用するための設定
+    shm_size: '16g'  # 共有メモリサイズ
+    tty: true        # -it オプションに対応 (interactive)
+    stdin_open: true # -it オプションに対応 (terminal)
+    working_dir: /workspace  # -w オプション
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/workspace  # ホストのカレントディレクトリをコンテナの/workspaceにマウント
+      # - ${PWD}:/workspace
+    ports:
+      - "8888:8888"
+    command: bash    # コンテナ起動時に実行するコマンド
